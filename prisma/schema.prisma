@@ -14,7 +14,7 @@ datasource db {
 }
 
 model Notification {
-  id            String @unique
+  id            Int @id @default(autoincrement())
   title         String
   content       String
   schedule_type String

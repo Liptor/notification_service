@@ -1,6 +1,3 @@
-
-
 export interface INewTaskCreate {
-    title: string,
-    
+  title: string;
 }

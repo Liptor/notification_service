@@ -1,4 +1,4 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { Notification } from '@prisma/client';
 import { AppService } from './app.service';
 
@@ -7,7 +7,7 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Post('/new-task')
-  async postNewTask(task: Notification): Promise<Notification> {
+  async postNewTask(@Body() task: Notification): Promise<Notification> {
     return this.appService.postNewTask(task);
   }
 

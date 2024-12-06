@@ -19,7 +19,6 @@ model Notification {
   content       String
   schedule      String 
   repeat        Boolean  @default(false)
-  schedule_type String
   interval      Int?
 
   createdAt     DateTime @default(now())

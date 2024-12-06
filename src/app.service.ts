@@ -7,10 +7,10 @@ export class AppService {
   constructor(private readonly database: PrismaClient) {}
 
   async postNewTask(task: Notification): Promise<Notification> {
-    const { title, content, schedule_type, repeat } = task;
+    const { title, content, schedule, repeat } = task;
 
     try {
-      const cronParse = parseExpression(schedule_type);
+      const cronParse = parseExpression(schedule);
 
       const nextExecutionTime = cronParse.next().toDate();
 
@@ -18,8 +18,7 @@ export class AppService {
         data: {
           title,
           content,
-          schedule: schedule_type,
-          schedule_type,
+          schedule,
           interval: repeat ? nextExecutionTime.getTime() : null,
           repeat,
         },

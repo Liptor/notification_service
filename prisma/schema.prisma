@@ -13,12 +13,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Job {
+model Notification {
   id            Int @id @default(autoincrement())
   title         String
   content       String
-  type          String
-
 
   lockedAt       DateTime?
   lastFinishedAt DateTime?

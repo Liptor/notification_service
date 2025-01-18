@@ -1,33 +1,55 @@
 import { Injectable } from '@nestjs/common';
-import { parseExpression } from 'cron-parser';
+import { SchedulerRegistry } from '@nestjs/schedule';
+import { CronJob } from 'cron';
 import { Notification, PrismaClient } from '@prisma/client';
+import { calculateProcessEvery } from './utils/proccessEvery';
 
 @Injectable()
 export class AppService {
-  constructor(private readonly database: PrismaClient) {}
+  constructor(
+    private readonly database: PrismaClient,
+    private schedulerRegistry: SchedulerRegistry,
+  ) {}
 
   async postNewTask(task: Notification): Promise<Notification> {
-    const { title, content, schedule, repeatAt, repeatInterval, priority } =
-      task;
+    const { title, content, startAt, repeatAt, repeatInterval } = task;
 
     try {
-      const cronParse = parseExpression(schedule);
+      if (repeatInterval) {
+        return await this.database.notification.create({
+          data: {
+            title,
+            content,
+            startAt,
+            repeatAt,
+            repeatInterval,
+          },
+        });
+      } else {
+        this.addCronJob('Once notification', startAt);
 
-      const nextExecutionTime = cronParse.next().toDate();
-
-      return await this.database.notification.create({
-        data: {
-          title,
-          content,
-          schedule,
-          interval: repeatAt ? nextExecutionTime.getTime() : null,
-          repeatInterval,
-          priority,
-        },
-      });
+        return await this.database.notification.create({
+          data: {
+            title,
+            content,
+            startAt,
+          },
+        });
+      }
     } catch (error) {
       throw new Error(`Invalid schedule_type: ${error.message}`);
     }
+  }
+
+  private addCronJob(name: string, value: string) {
+    const valueNum = calculateProcessEvery(value);
+
+    const job = new CronJob(`${valueNum} * * * * *`, () => {
+      return 
+    });
+
+    this.schedulerRegistry.addCronJob(name, job);
+    job.start();
   }
 
   async getAllTasks(): Promise<Notification[]> {

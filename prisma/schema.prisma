@@ -21,9 +21,6 @@ model Notification {
 
   repeatAt      String?
   repeatInterval String?
-
-  nextRunAt     DateTime?
   
-
   createdAt     DateTime @default(now())
 }

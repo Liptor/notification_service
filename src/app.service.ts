@@ -3,12 +3,14 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { Notification, PrismaClient } from '@prisma/client';
 import { calculateProcessEvery } from './utils/proccessEvery';
+import { JobGateway } from './services/websocket.service';
 
 @Injectable()
 export class AppService {
   constructor(
     private readonly database: PrismaClient,
     private schedulerRegistry: SchedulerRegistry,
+    private jobWebsocket: JobGateway,
   ) {}
 
   async postNewTask(task: Notification): Promise<Notification> {
@@ -16,6 +18,9 @@ export class AppService {
 
     try {
       if (repeatInterval) {
+        const milliseconds = calculateProcessEvery(repeatInterval);
+        this.addCronInterval(title, milliseconds);
+
         return await this.database.notification.create({
           data: {
             title,
@@ -26,7 +31,7 @@ export class AppService {
           },
         });
       } else {
-        this.addCronJob('Once notification', startAt);
+        this.addCronJob(title, startAt);
 
         return await this.database.notification.create({
           data: {
@@ -45,11 +50,17 @@ export class AppService {
     const valueNum = calculateProcessEvery(value);
 
     const job = new CronJob(`${valueNum} * * * * *`, () => {
-      return 
+      return;
     });
 
     this.schedulerRegistry.addCronJob(name, job);
     job.start();
+  }
+
+  private addCronInterval(name: string, milliseconds: number) {
+    const interval = setInterval(() => {}, milliseconds);
+
+    this.schedulerRegistry.addInterval(name, interval);
   }
 
   async getAllTasks(): Promise<Notification[]> {

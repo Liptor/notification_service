@@ -1,8 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { Notification, PrismaClient } from '@prisma/client';
-import { calculateProcessEvery } from './utils/proccessEvery';
+import {
+  calculateProcessEvery,
+  calculateProcessEveryInterval,
+} from './utils/proccessEvery';
 import { JobGateway } from './services/websocket.service';
 
 @Injectable()
@@ -18,10 +21,7 @@ export class AppService {
 
     try {
       if (repeatInterval) {
-        const milliseconds = calculateProcessEvery(repeatInterval);
-        this.addCronInterval(title, milliseconds);
-
-        return await this.database.notification.create({
+        await this.database.notification.create({
           data: {
             title,
             content,
@@ -30,37 +30,52 @@ export class AppService {
             repeatInterval,
           },
         });
-      } else {
-        this.addCronJob(title, startAt);
 
-        return await this.database.notification.create({
+        const milliseconds = calculateProcessEveryInterval(repeatInterval);
+        this.addCronInterval(title, content, milliseconds);
+
+        return;
+      } else {
+        await this.database.notification.create({
           data: {
             title,
             content,
             startAt,
           },
         });
+
+        this.addCronJob(title, content, startAt);
+        return;
       }
     } catch (error) {
       throw new Error(`Invalid schedule_type: ${error.message}`);
     }
   }
 
-  private addCronJob(name: string, value: string) {
+  private addCronJob(title: string, content: string, value: string) {
     const valueNum = calculateProcessEvery(value);
 
     const job = new CronJob(`${valueNum} * * * * *`, () => {
-      return;
+      this.jobWebsocket.sendEvent(title, content);
+
+      this.schedulerRegistry.deleteCronJob(title);
     });
 
-    this.schedulerRegistry.addCronJob(name, job);
+    this.schedulerRegistry.addCronJob(title, job);
     job.start();
   }
 
-  private addCronInterval(name: string, milliseconds: number) {
-    const interval = setInterval(() => {}, milliseconds);
+  private addCronInterval(
+    title: string,
+    content: string,
+    milliseconds: number,
+  ) {
+    const interval = setInterval(
+      () => this.jobWebsocket.sendEvent(title, content),
+      milliseconds,
+    );
 
-    this.schedulerRegistry.addInterval(name, interval);
+    this.schedulerRegistry.addInterval(title, interval);
   }
 
   async getAllTasks(): Promise<Notification[]> {

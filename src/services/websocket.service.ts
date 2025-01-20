@@ -1,9 +1,13 @@
-import { SubscribeMessage, WebSocketGateway } from '@nestjs/websockets';
+import {
+  MessageBody,
+  SubscribeMessage,
+  WebSocketGateway,
+} from '@nestjs/websockets';
 
 @WebSocketGateway()
 export class JobGateway {
-  private constructor();
-
-  @SubscribeMessage('')
-  sendEvent() {}
+  @SubscribeMessage('task')
+  sendEvent(@MessageBody() title: string, content: string) {
+    return { title, content };
+  }
 }

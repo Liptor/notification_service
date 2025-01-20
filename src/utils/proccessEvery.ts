@@ -4,3 +4,10 @@ export const calculateProcessEvery = (input: number | string): number => {
   if (typeof input == 'number') return input;
   return (humanInterval(input) as number) / 1000 || 5000;
 };
+
+export const calculateProcessEveryInterval = (
+  input: number | string,
+): number => {
+  if (typeof input == 'number') return input;
+  return humanInterval(input) as number;
+};

@@ -8,7 +8,7 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Post('/new-task')
-  async postNewTask(@Body() task: JobReq): Promise<Notification> {
+  async postTask(@Body() task: JobReq): Promise<Notification> {
     return this.appService.postNewTask(task);
   }
 
